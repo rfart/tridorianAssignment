@@ -12,6 +12,12 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorStorage, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
+    // Variables to track active proposals
+    uint256[] public activeProposals;
+    
+    // Mapping to check if a proposal is active (for efficient lookup)
+    mapping(uint256 => bool) private _isProposalActive;
+
     constructor(IVotes _token, TimelockController _timelock)
         Governor("TridorianGovernor")
         GovernorSettings(1 minutes, 10 minutes, 0)
@@ -19,6 +25,23 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         GovernorVotesQuorumFraction(4)
         GovernorTimelockControl(_timelock)
     {}
+
+    /**
+     * @dev Returns all currently active proposal IDs.
+     * @return Array of active proposal IDs
+     */
+    function getActiveProposals() public view returns (uint256[] memory) {
+        return activeProposals;
+    }
+    
+    /**
+     * @dev Checks if a specific proposal is active
+     * @param proposalId The ID of the proposal to check
+     * @return True if the proposal is active, false otherwise
+     */
+    function isProposalActive(uint256 proposalId) public view returns (bool) {
+        return _isProposalActive[proposalId];
+    }
 
     // The following functions are overrides required by Solidity.
 
@@ -81,7 +104,13 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         override(Governor, GovernorStorage)
         returns (uint256)
     {
-        return super._propose(targets, values, calldatas, description, proposer);
+        uint256 proposalId = super._propose(targets, values, calldatas, description, proposer);
+        
+        // Add to active proposals 
+        activeProposals.push(proposalId);
+        _isProposalActive[proposalId] = true;
+        
+        return proposalId;
     }
 
     function _queueOperations(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
@@ -89,6 +118,11 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         override(Governor, GovernorTimelockControl)
         returns (uint48)
     {
+        // If the proposal is active, remove it from active proposals
+        if (_isProposalActive[proposalId]) {
+            _removeProposal(proposalId);
+        }
+        
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -104,7 +138,14 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         override(Governor, GovernorTimelockControl)
         returns (uint256)
     {
-        return super._cancel(targets, values, calldatas, descriptionHash);
+        uint256 proposalId = super._cancel(targets, values, calldatas, descriptionHash);
+        
+        // If the proposal is active, remove it from active proposals
+        if (_isProposalActive[proposalId]) {
+            _removeProposal(proposalId);
+        }
+        
+        return proposalId;
     }
 
     function _executor()
@@ -114,5 +155,28 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         returns (address)
     {
         return super._executor();
+    }
+    
+    /**
+     * @dev Internal helper to remove a proposal from the active proposals array
+     * @param proposalId The ID of the proposal to remove
+     */
+    function _removeProposal(uint256 proposalId) internal {
+        // Mark as not active
+        _isProposalActive[proposalId] = false;
+        
+        // Find and remove from array
+        uint256 _length = activeProposals.length;
+        for (uint256 i; i < _length;) {
+            if (activeProposals[i] == proposalId) {
+                // Replace with last element and pop
+                activeProposals[i] = activeProposals[activeProposals.length - 1];
+                activeProposals.pop();
+                break;
+            }
+            unchecked {
+                ++i;
+            }
+        }
     }
 }

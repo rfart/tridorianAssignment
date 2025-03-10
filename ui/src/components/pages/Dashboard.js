@@ -9,8 +9,13 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeProposalCount, setActiveProposalCount] = useState(0);
 
+  // Add loading states for individual data points
+  const [loadingTokenBalance, setLoadingTokenBalance] = useState(false);
+  const [loadingVotingPower, setLoadingVotingPower] = useState(false);
+  const [loadingProposals, setLoadingProposals] = useState(false);
+
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchInitialData = async () => {
       try {
         if (!ethersService.initialized) {
           await ethersService.initialize();
@@ -19,19 +24,90 @@ const Dashboard = () => {
         const account = await ethersService.getAccount();
         setUserAccount(account);
 
-        // These are placeholders - in a real app, you would get actual data from contracts
-        setTokenBalance("1000.0");
-        setVotingPower("1000.0");
-        setActiveProposalCount(2);
+        // Try to fetch all data initially
+        try {
+          setLoadingTokenBalance(true);
+          const balance = await ethersService.getTokenBalance(account);
+          setTokenBalance(balance || "0");
+        } catch (error) {
+          console.error("Error fetching initial token balance:", error);
+          // Keep default "0" if fails
+        } finally {
+          setLoadingTokenBalance(false);
+        }
+
+        try {
+          setLoadingVotingPower(true);
+          const power = await ethersService.getVotingPower(account);
+          setVotingPower(power || "0");
+        } catch (error) {
+          console.error("Error fetching initial voting power:", error);
+          // Keep default "0" if fails
+        } finally {
+          setLoadingVotingPower(false);
+        }
+
+        try {
+          setLoadingProposals(true);
+          const count = await ethersService.getActiveProposalCount();
+          setActiveProposalCount(count || 0);
+        } catch (error) {
+          console.error("Error fetching initial active proposals:", error);
+          // Keep default 0 if fails
+        } finally {
+          setLoadingProposals(false);
+        }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Error fetching user account:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchDashboardData();
+    fetchInitialData();
   }, []);
+
+  const fetchTokenBalance = async () => {
+    try {
+      setLoadingTokenBalance(true);
+      // Replace with actual contract call to get token balance
+      const balance = await ethersService.getTokenBalance(userAccount);
+      setTokenBalance(balance || "0");
+    } catch (error) {
+      console.error("Error fetching token balance:", error);
+      setTokenBalance("0");
+    } finally {
+      setLoadingTokenBalance(false);
+    }
+  };
+
+  const fetchVotingPower = async () => {
+    try {
+      setLoadingVotingPower(true);
+      // Replace with actual contract call to get voting power
+      const power = await ethersService.getVotingPower(userAccount);
+      setVotingPower(power || "0");
+    } catch (error) {
+      console.error("Error fetching voting power:", error);
+      setVotingPower("0");
+    } finally {
+      setLoadingVotingPower(false);
+    }
+  };
+
+  const fetchActiveProposals = async () => {
+    try {
+      setLoadingProposals(true);
+      // Replace with actual contract call to get active proposals
+      const count = await ethersService.getActiveProposalCount();
+      setActiveProposalCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching active proposals:", error);
+      setActiveProposalCount(0);
+    } finally {
+      setLoadingProposals(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -56,11 +132,29 @@ const Dashboard = () => {
           </div>
           <div className="bg-gray-50 p-4 rounded">
             <p className="text-gray-500 text-sm">Token Balance</p>
-            <p className="text-2xl font-bold">{tokenBalance}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold">{tokenBalance}</p>
+              <button
+                onClick={fetchTokenBalance}
+                disabled={loadingTokenBalance}
+                className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+              >
+                {loadingTokenBalance ? "Loading..." : "Refresh"}
+              </button>
+            </div>
           </div>
           <div className="bg-gray-50 p-4 rounded">
             <p className="text-gray-500 text-sm">Voting Power</p>
-            <p className="text-2xl font-bold">{votingPower}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold">{votingPower}</p>
+              <button
+                onClick={fetchVotingPower}
+                disabled={loadingVotingPower}
+                className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+              >
+                {loadingVotingPower ? "Loading..." : "Refresh"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -70,7 +164,16 @@ const Dashboard = () => {
           <h2 className="text-xl font-semibold mb-4">Governance</h2>
           <div className="mb-4">
             <p className="text-gray-500 mb-1">Active Proposals</p>
-            <p className="text-2xl font-bold">{activeProposalCount}</p>
+            <div className="flex items-center">
+              <p className="text-2xl font-bold">{activeProposalCount}</p>
+              <button
+                onClick={fetchActiveProposals}
+                disabled={loadingProposals}
+                className="ml-4 bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+              >
+                {loadingProposals ? "Loading..." : "Refresh"}
+              </button>
+            </div>
           </div>
           <div className="flex justify-between items-center">
             <Link
@@ -89,7 +192,7 @@ const Dashboard = () => {
           <h2 className="text-xl font-semibold mb-4">Treasury</h2>
           <div className="mb-4">
             <p className="text-gray-500 mb-1">Treasury Balance</p>
-            <p className="text-2xl font-bold">5,000 ETH</p>
+            <p className="text-2xl font-bold">0 ETH</p>
           </div>
           <Link
             to="/treasury"

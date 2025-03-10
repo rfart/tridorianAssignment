@@ -10,12 +10,7 @@ const Treasury = () => {
       try {
         // This is mock data - in a real app you would fetch from your backend or blockchain
         const mockData = {
-          totalBalance: "5000.0",
-          assets: [
-            { name: "ETH", amount: "3500.0", valueUSD: "7,000,000" },
-            { name: "DAO Token", amount: "1,000,000.0", valueUSD: "1,000,000" },
-            { name: "USDC", amount: "500,000.0", valueUSD: "500,000" },
-          ],
+          balance: "3500.0",
           recentTransactions: [
             {
               id: "1",
@@ -27,14 +22,14 @@ const Treasury = () => {
             {
               id: "2",
               type: "Withdrawal",
-              amount: "50,000.0 USDC",
+              amount: "50.0 ETH",
               date: "2023-07-10",
               to: "0x8765...4321",
             },
             {
               id: "3",
               type: "Deposit",
-              amount: "100,000.0 DAO",
+              amount: "100.0 ETH",
               date: "2023-07-05",
               from: "0x2468...1357",
             },
@@ -75,30 +70,15 @@ const Treasury = () => {
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Treasury Overview</h2>
         <div className="bg-blue-50 p-4 rounded mb-4">
-          <p className="text-gray-700 mb-1">Total Value (USD)</p>
-          <p className="text-3xl font-bold">${treasuryData.totalBalance} ETH</p>
+          <p className="text-gray-700 mb-1">Total Balance</p>
+          <p className="text-3xl font-bold">{treasuryData.balance} ETH</p>
         </div>
 
-        <h3 className="font-medium text-gray-700 mb-2">Assets</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr className="bg-gray-100 border-b">
-                <th className="py-2 px-4 text-left">Asset</th>
-                <th className="py-2 px-4 text-right">Amount</th>
-                <th className="py-2 px-4 text-right">Value (USD)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {treasuryData.assets.map((asset, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-3 px-4">{asset.name}</td>
-                  <td className="py-3 px-4 text-right">{asset.amount}</td>
-                  <td className="py-3 px-4 text-right">${asset.valueUSD}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bg-gray-50 p-4 rounded">
+          <p className="text-sm text-gray-600">
+            This treasury accepts ETH deposits from anyone. Withdrawals can only
+            be executed through governance proposals approved by token holders.
+          </p>
         </div>
       </div>
 
