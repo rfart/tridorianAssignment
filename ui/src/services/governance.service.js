@@ -175,6 +175,26 @@ class GovernanceService {
     }
   }
 
+  async getActiveProposalsLength() {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+
+      // Call the getActiveProposalsLength function on the governor contract
+      const count =
+        await ethersService.governorContract.activeProposalsLength();
+      return {
+        success: true,
+        count: count.toNumber(),
+      };
+    } catch (error) {
+      console.error("Error fetching active proposals length:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   async getProposalDetails(proposalId) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
