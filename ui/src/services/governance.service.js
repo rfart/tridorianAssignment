@@ -226,6 +226,7 @@ class GovernanceService {
       let values = [];
       let calldatas = [];
       let descriptionHash = ethers.constants.HashZero;
+      let proposer = ethers.constants.AddressZero;
 
       try {
         const proposalData =
@@ -234,6 +235,10 @@ class GovernanceService {
         values = proposalData.values;
         calldatas = proposalData.calldatas;
         descriptionHash = proposalData.descriptionHash;
+
+        proposer = await ethersService.governorContract.proposalProposer(
+          proposalId
+        );
       } catch (error) {
         console.warn(
           `Could not get proposal data for proposal ${proposalId}:`,
@@ -247,7 +252,8 @@ class GovernanceService {
       // Create safe string values for UI display
       return {
         id: proposalId.toString(),
-        title: title,
+        title,
+        proposer,
         state: stateResult.state,
         stateLabel: stateResult.stateLabel,
         targets: targets || [],
@@ -256,11 +262,11 @@ class GovernanceService {
         descriptionHash: descriptionHash
           ? descriptionHash.toString()
           : ethers.constants.HashZero,
-        forVotes: forVotes,
-        againstVotes: againstVotes,
-        abstainVotes: abstainVotes,
-        snapshot: snapshot,
-        deadline: deadline,
+        forVotes,
+        againstVotes,
+        abstainVotes,
+        snapshot,
+        deadline,
         description:
           "Original proposal description not available (only hash is stored on-chain)",
       };

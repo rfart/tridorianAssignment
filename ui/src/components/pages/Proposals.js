@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DelegateVoting from "../governance/DelegateVoting";
 import CreateProposal from "../governance/CreateProposal";
-import ProposalCard from "../governance/ProposalCard";
+import SelectedProposalDetails from "../governance/SelectedProposalDetails";
 import governanceService from "../../services/governance.service";
 
 const Proposals = () => {
@@ -56,31 +56,10 @@ const Proposals = () => {
       const details = await governanceService.getProposalDetails(proposalId);
       console.dir(details);
 
-      // Safely format the data for display
-      const formattedDetails = {
-        ...details,
-        // Safely convert from wei to readable format with error handling
-        forVotes: details.forVotes,
-        againstVotes: details.againstVotes,
-        abstainVotes: details.abstainVotes,
-        // Format target addresses to be more readable
-        formattedTargets: Array.isArray(details.targets)
-          ? details.targets.map(
-              (target) => `${target.slice(0, 6)}...${target.slice(-4)}`
-            )
-          : [],
-        // Add a display for calldata size
-        calldataInfo: Array.isArray(details.calldatas)
-          ? details.calldatas.map((data) => `${data.length} bytes`)
-          : [],
-        // Additional display-friendly fields
-        status: details.stateLabel,
-      };
-
-      // Update the proposal details cache
+      // Update the proposal details cache with complete data
       setProposalDetails((prevDetails) => ({
         ...prevDetails,
-        [proposalId]: formattedDetails,
+        [proposalId]: details,
       }));
     } catch (err) {
       console.error(`Error fetching details for proposal ${proposalId}:`, err);
@@ -185,36 +164,14 @@ const Proposals = () => {
             ))}
           </div>
 
-          {/* Selected proposal details */}
+          {/* Selected proposal details using new component */}
           {selectedProposalId && (
-            <div className="mt-6">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-xl font-bold">Proposal Details</h3>
-                <button
-                  onClick={clearSelectedProposal}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  Close Details
-                </button>
-              </div>
-
-              {fetchingDetails ? (
-                <div className="text-center py-10 border rounded-md">
-                  <p className="text-gray-500">Loading proposal details...</p>
-                </div>
-              ) : proposalDetails[selectedProposalId] ? (
-                <ProposalCard
-                  proposal={proposalDetails[selectedProposalId]}
-                  refreshProposals={fetchActiveProposals}
-                />
-              ) : (
-                <div className="bg-gray-50 p-6 text-center rounded-md">
-                  <p className="text-gray-500">
-                    Failed to load details for this proposal.
-                  </p>
-                </div>
-              )}
-            </div>
+            <SelectedProposalDetails
+              proposal={proposalDetails[selectedProposalId]}
+              refreshProposals={fetchActiveProposals}
+              onClose={clearSelectedProposal}
+              isLoading={fetchingDetails}
+            />
           )}
         </div>
       )}
