@@ -161,6 +161,117 @@ class GovernanceService {
     }
   }
 
+  async getActiveProposals() {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+
+      // Call the getActiveProposals function on the governor contract
+      const activeProposals =
+        await ethersService.governorContract.getActiveProposals();
+      return activeProposals;
+    } catch (error) {
+      console.error("Error fetching active proposals:", error);
+      throw error;
+    }
+  }
+
+  async getProposalDetails(proposalId) {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+
+      // Get all proposal data from storage in a single call
+      const proposalData = await ethersService.governorContract.proposalStorage(
+        proposalId
+      );
+
+      if (!proposalData) {
+        throw new Error("Proposal data not found");
+      }
+
+      // Extract data from the proposalData object
+      const state = proposalData.state || 0;
+      const stateLabels = [
+        "Pending",
+        "Active",
+        "Canceled",
+        "Defeated",
+        "Succeeded",
+        "Queued",
+        "Expired",
+        "Executed",
+      ];
+      const stateLabel = stateLabels[state] || "Unknown";
+
+      // Extract vote counts
+      const againstVotes = proposalData.againstVotes
+        ? proposalData.againstVotes.toNumber()
+        : 0;
+      const forVotes = proposalData.forVotes
+        ? proposalData.forVotes.toNumber()
+        : 0;
+      const abstainVotes = proposalData.abstainVotes
+        ? proposalData.abstainVotes.toNumber()
+        : 0;
+
+      // Extract snapshot and deadline
+      const snapshot = proposalData.snapshot
+        ? proposalData.snapshot.toNumber()
+        : 0;
+      const deadline = proposalData.deadline
+        ? proposalData.deadline.toNumber()
+        : 0;
+
+      // Extract proposal details
+      const targets = proposalData.targets || [];
+      const values = Array.isArray(proposalData.values)
+        ? proposalData.values.map((v) => (v ? v.toNumber() : 0))
+        : [];
+      const calldatas = proposalData.calldatas || [];
+      const description = proposalData.description || "No description";
+
+      // Reconstruct a title from the proposal ID
+      const title = `Proposal ${proposalId.toString().slice(0, 8)}...`;
+
+      return {
+        id: proposalId.toString(),
+        title,
+        state,
+        stateLabel,
+        targets,
+        values,
+        calldatas,
+        forVotes,
+        againstVotes,
+        abstainVotes,
+        snapshot,
+        deadline,
+        description,
+      };
+    } catch (error) {
+      console.error(
+        `Error fetching details for proposal ${proposalId}:`,
+        error
+      );
+      // Return minimal safe data in case of error
+      return {
+        id: proposalId.toString(),
+        title: `Proposal ${proposalId.toString().slice(0, 8)}...`,
+        state: 0,
+        stateLabel: "Unknown",
+        targets: [],
+        values: [],
+        calldatas: [],
+        descriptionHash: ethers.constants.HashZero,
+        forVotes: "0",
+        againstVotes: "0",
+        abstainVotes: "0",
+        snapshot: "0",
+        deadline: "0",
+        description: "Failed to retrieve proposal data",
+      };
+    }
+  }
+
   // Helper function to hash description string
   hashProposalDescription(description) {
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(description));

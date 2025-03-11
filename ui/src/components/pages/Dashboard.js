@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ethersService from "../../services/ethers.service";
+import governanceService from "../../services/governance.service";
 
 const Dashboard = () => {
   const [userAccount, setUserAccount] = useState("");
@@ -38,22 +39,32 @@ const Dashboard = () => {
 
         try {
           setLoadingVotingPower(true);
-          const power = await ethersService.getVotingPower(account);
-          setVotingPower(power || "0");
+          const result = await governanceService.getVotingPower(account);
+          if (result.success) {
+            setVotingPower(result.votingPower);
+          } else {
+            console.error("Error in getVotingPower:", result.error);
+            setVotingPower("0");
+          }
         } catch (error) {
           console.error("Error fetching initial voting power:", error);
-          // Keep default "0" if fails
+          setVotingPower("0");
         } finally {
           setLoadingVotingPower(false);
         }
 
         try {
           setLoadingProposals(true);
-          const count = await ethersService.getActiveProposalCount();
-          setActiveProposalCount(count || 0);
+          const result = await governanceService.getActiveProposalsLength();
+          if (result.success) {
+            setActiveProposalCount(result.count);
+          } else {
+            console.error("Error in getActiveProposalsLength:", result.error);
+            setActiveProposalCount(0);
+          }
         } catch (error) {
           console.error("Error fetching initial active proposals:", error);
-          // Keep default 0 if fails
+          setActiveProposalCount(0);
         } finally {
           setLoadingProposals(false);
         }
@@ -84,9 +95,13 @@ const Dashboard = () => {
   const fetchVotingPower = async () => {
     try {
       setLoadingVotingPower(true);
-      // Replace with actual contract call to get voting power
-      const power = await ethersService.getVotingPower(userAccount);
-      setVotingPower(power || "0");
+      const result = await governanceService.getVotingPower(userAccount);
+      if (result.success) {
+        setVotingPower(result.votingPower);
+      } else {
+        console.error("Error in getVotingPower:", result.error);
+        setVotingPower("0");
+      }
     } catch (error) {
       console.error("Error fetching voting power:", error);
       setVotingPower("0");
@@ -98,9 +113,13 @@ const Dashboard = () => {
   const fetchActiveProposals = async () => {
     try {
       setLoadingProposals(true);
-      // Replace with actual contract call to get active proposals
-      const count = await ethersService.getActiveProposalCount();
-      setActiveProposalCount(count || 0);
+      const result = await governanceService.getActiveProposalsLength();
+      if (result.success) {
+        setActiveProposalCount(result.count);
+      } else {
+        console.error("Error in getActiveProposalsLength:", result.error);
+        setActiveProposalCount(0);
+      }
     } catch (error) {
       console.error("Error fetching active proposals:", error);
       setActiveProposalCount(0);
