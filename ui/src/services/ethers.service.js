@@ -1,17 +1,14 @@
 import { ethers } from "ethers";
+import VotingToken from "./abi/VotingToken.sol/VotingToken.json";
+import Governor from "./abi/TridorianGovernor.sol/TridorianGovernor.json";
 
-// ABI definitions - replace with your actual contract ABIs
-const governorABI = [
-  // Add your Governor contract ABI here
-];
+const tokenABI = VotingToken.abi;
+const governorABI = Governor.abi;
 
-const tokenABI = [
-  // Add your Token contract ABI here
-];
-
-// Contract addresses - replace with your deployed contract addresses
-const GOVERNOR_ADDRESS = "0x...";
-const TOKEN_ADDRESS = "0x...";
+// Use environment variables from React's process.env
+// These should be prefixed with REACT_APP_ in a .env file
+const GOVERNOR_ADDRESS = process.env.REACT_APP_GOVERNOR_ADDRESS;
+const TOKEN_ADDRESS = process.env.REACT_APP_VOTING_TOKEN_ADDRESS;
 
 class EthersService {
   constructor() {
@@ -65,6 +62,36 @@ class EthersService {
     if (!this.initialized) await this.initialize();
     const network = await this.provider.getNetwork();
     return network.chainId;
+  }
+
+  async getTokenBalance(address = null, formatted = true) {
+    if (!this.initialized) await this.initialize();
+
+    try {
+      // If no address provided, use the connected wallet address
+      const targetAddress = address || (await this.signer.getAddress());
+
+      // Call the balanceOf function on the token contract
+      const balance = await this.tokenContract.balanceOf(targetAddress);
+
+      // Return formatted or raw balance based on the parameter
+      return formatted ? this.formatBigNumber(balance) : balance;
+    } catch (error) {
+      console.error("Error fetching token balance:", error);
+      throw error;
+    }
+  }
+
+  // Utility method to format BigNumber to string
+  formatBigNumber(bigNumber, decimals = 18) {
+    if (!bigNumber) return "0";
+    try {
+      // Format the BigNumber to a string with decimals
+      return ethers.utils.formatUnits(bigNumber, decimals);
+    } catch (error) {
+      console.error("Error formatting BigNumber:", error);
+      return "0";
+    }
   }
 }
 
