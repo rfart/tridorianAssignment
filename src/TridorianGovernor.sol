@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicensed
-pragma solidity ^0.8.22;
+pragma solidity 0.8.28;
 
 import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
@@ -32,6 +32,14 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
      */
     function getActiveProposals() public view returns (uint256[] memory) {
         return activeProposals;
+    }
+
+    /**
+     * @dev Returns the number of active proposals.
+     * @return The number of active proposals
+     */
+    function activeProposalsLength() public view returns (uint256) {
+        return activeProposals.length;
     }
     
     /**
