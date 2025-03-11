@@ -179,73 +179,90 @@ class GovernanceService {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
-      // Get all proposal data from storage in a single call
-      const proposalData = await ethersService.governorContract.proposalStorage(
-        proposalId
-      );
+      // Get proposal state
+      const stateResult = await this.getProposalState(proposalId);
 
-      if (!proposalData) {
-        throw new Error("Proposal data not found");
+      console.log("Proposal state:", stateResult);
+
+      // Get proposal votes - handle potential errors for non-existent proposals
+      let forVotes;
+      let againstVotes;
+      let abstainVotes;
+      try {
+        const votes = await ethersService.governorContract.proposalVotes(
+          proposalId
+        );
+
+        console.log("Proposal votes:", votes);
+
+        // Ensure we're getting valid BigNumber values
+        againstVotes = votes[0] ? votes[0].toNumber() : 0;
+        forVotes = votes[1] ? votes[1].toNumber() : 0;
+        abstainVotes = votes[2] ? votes[2].toNumber() : 0;
+      } catch (error) {
+        console.warn(`Could not get votes for proposal ${proposalId}:`, error);
       }
 
-      // Extract data from the proposalData object
-      const state = proposalData.state || 0;
-      const stateLabels = [
-        "Pending",
-        "Active",
-        "Canceled",
-        "Defeated",
-        "Succeeded",
-        "Queued",
-        "Expired",
-        "Executed",
-      ];
-      const stateLabel = stateLabels[state] || "Unknown";
+      // Get proposal snapshot and deadline - handle potential errors
+      let snapshot = 0;
+      let deadline = 0;
+      try {
+        const snapshotValue =
+          await ethersService.governorContract.proposalSnapshot(proposalId);
+        const deadlineValue =
+          await ethersService.governorContract.proposalDeadline(proposalId);
+        snapshot = snapshotValue ? snapshotValue.toNumber() : 0;
+        deadline = deadlineValue ? deadlineValue.toNumber() : 0;
+      } catch (error) {
+        console.warn(
+          `Could not get snapshot/deadline for proposal ${proposalId}:`,
+          error
+        );
+      }
 
-      // Extract vote counts
-      const againstVotes = proposalData.againstVotes
-        ? proposalData.againstVotes.toNumber()
-        : 0;
-      const forVotes = proposalData.forVotes
-        ? proposalData.forVotes.toNumber()
-        : 0;
-      const abstainVotes = proposalData.abstainVotes
-        ? proposalData.abstainVotes.toNumber()
-        : 0;
+      // Ensure we're always passing valid data to avoid BigNumber errors
+      // Get proposal details from storage
+      let targets = [];
+      let values = [];
+      let calldatas = [];
+      let descriptionHash = ethers.constants.HashZero;
 
-      // Extract snapshot and deadline
-      const snapshot = proposalData.snapshot
-        ? proposalData.snapshot.toNumber()
-        : 0;
-      const deadline = proposalData.deadline
-        ? proposalData.deadline.toNumber()
-        : 0;
-
-      // Extract proposal details
-      const targets = proposalData.targets || [];
-      const values = Array.isArray(proposalData.values)
-        ? proposalData.values.map((v) => (v ? v.toNumber() : 0))
-        : [];
-      const calldatas = proposalData.calldatas || [];
-      const description = proposalData.description || "No description";
+      try {
+        const proposalData =
+          await ethersService.governorContract.proposalDetails(proposalId);
+        targets = proposalData.targets;
+        values = proposalData.values;
+        calldatas = proposalData.calldatas;
+        descriptionHash = proposalData.descriptionHash;
+      } catch (error) {
+        console.warn(
+          `Could not get proposal data for proposal ${proposalId}:`,
+          error
+        );
+      }
 
       // Reconstruct a title from the proposal ID
       const title = `Proposal ${proposalId.toString().slice(0, 8)}...`;
 
+      // Create safe string values for UI display
       return {
         id: proposalId.toString(),
-        title,
-        state,
-        stateLabel,
-        targets,
-        values,
-        calldatas,
-        forVotes,
-        againstVotes,
-        abstainVotes,
-        snapshot,
-        deadline,
-        description,
+        title: title,
+        state: stateResult.state,
+        stateLabel: stateResult.stateLabel,
+        targets: targets || [],
+        values: Array.isArray(values) ? values.map((v) => v.toString()) : [],
+        calldatas: calldatas || [],
+        descriptionHash: descriptionHash
+          ? descriptionHash.toString()
+          : ethers.constants.HashZero,
+        forVotes: forVotes,
+        againstVotes: againstVotes,
+        abstainVotes: abstainVotes,
+        snapshot: snapshot,
+        deadline: deadline,
+        description:
+          "Original proposal description not available (only hash is stored on-chain)",
       };
     } catch (error) {
       console.error(
