@@ -1,5 +1,6 @@
 import React from "react";
 import ProposalCard from "./ProposalCard";
+import VoteOnProposal from "./VoteOnProposal";
 
 const SelectedProposalDetails = ({
   proposal,
@@ -35,6 +36,16 @@ const SelectedProposalDetails = ({
       </div>
 
       <ProposalCard proposal={proposal} refreshProposals={refreshProposals} />
+
+      {/* Add voting component for active proposals */}
+      {proposal.state === 1 && (
+        <div className="mt-4 mb-6">
+          <VoteOnProposal
+            proposalId={proposal.id}
+            onVoteComplete={refreshProposals}
+          />
+        </div>
+      )}
 
       {/* Additional details section to display all data */}
       <div className="mt-6 bg-gray-50 p-6 rounded-lg">
@@ -167,17 +178,17 @@ const getStateColor = (state) => {
 };
 
 const getVotingProgressBar = (proposal) => {
-  const total =
-    Number(proposal.forVotes) +
-    Number(proposal.againstVotes) +
-    Number(proposal.abstainVotes);
+  // Ensure proper conversion of vote values to numbers
+  const forVotes = parseInt(proposal.forVotes) || 0;
+  const againstVotes = parseInt(proposal.againstVotes) || 0;
+  const abstainVotes = parseInt(proposal.abstainVotes) || 0;
+
+  const total = forVotes + againstVotes + abstainVotes;
 
   if (total === 0) return <p className="text-gray-500">No votes cast yet</p>;
 
-  const forPercentage = Math.round((Number(proposal.forVotes) / total) * 100);
-  const againstPercentage = Math.round(
-    (Number(proposal.againstVotes) / total) * 100
-  );
+  const forPercentage = Math.round((forVotes / total) * 100);
+  const againstPercentage = Math.round((againstVotes / total) * 100);
   const abstainPercentage = 100 - forPercentage - againstPercentage;
 
   return (
