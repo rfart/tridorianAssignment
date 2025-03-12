@@ -9,6 +9,7 @@ import ConnectPrompt from "./components/ConnectPrompt";
 import Dashboard from "./components/pages/Dashboard";
 import Proposals from "./components/pages/Proposals";
 import Treasury from "./components/pages/Treasury";
+import ProposalManagement from "./components/pages/ProposalManagement";
 import Navigation from "./components/Navigation";
 import "./App.css";
 
@@ -51,6 +52,10 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/proposals" element={<Proposals />} />
+              <Route
+                path="/proposal-management"
+                element={<ProposalManagement />}
+              />
               <Route path="/treasury" element={<Treasury />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

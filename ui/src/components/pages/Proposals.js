@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
-import DelegateVoting from "../governance/DelegateVoting";
-import CreateProposal from "../governance/CreateProposal";
 import SelectedProposalDetails from "../governance/SelectedProposalDetails";
 import governanceService from "../../services/governance.service";
+import DelegateVoting from "../governance/DelegateVoting";
 
 const Proposals = () => {
   const [activeProposalIds, setActiveProposalIds] = useState([]);
   const [proposalDetails, setProposalDetails] = useState({});
   const [selectedProposalId, setSelectedProposalId] = useState(null);
   const [error, setError] = useState(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showDelegateForm, setShowDelegateForm] = useState(false);
   const [fetchingProposals, setFetchingProposals] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
+  const [showDelegateForm, setShowDelegateForm] = useState(false);
 
   // Add initial data fetch on component mount
   useEffect(() => {
@@ -86,29 +84,12 @@ const Proposals = () => {
           >
             {showDelegateForm ? "Hide Delegation" : "Delegate Voting Power"}
           </button>
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-          >
-            {showCreateForm ? "Cancel" : "Create Proposal"}
-          </button>
         </div>
       </div>
 
       {showDelegateForm && (
         <div className="mb-6">
           <DelegateVoting />
-        </div>
-      )}
-
-      {showCreateForm && (
-        <div className="mb-6">
-          <CreateProposal
-            onProposalCreated={() => {
-              setShowCreateForm(false);
-              fetchActiveProposals();
-            }}
-          />
         </div>
       )}
 
@@ -136,8 +117,7 @@ const Proposals = () => {
       ) : activeProposalIds.length === 0 ? (
         <div className="bg-gray-50 p-10 text-center rounded">
           <p className="text-gray-500">
-            No active proposals found. Click "Refresh Proposals" to try again or
-            create a new one.
+            No active proposals found. Click "Refresh Proposals" to try again.
           </p>
         </div>
       ) : (

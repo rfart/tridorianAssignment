@@ -130,6 +130,31 @@ class GovernanceService {
     }
   }
 
+  async cancelProposal(targetContract, value, calldata, descriptionHash) {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+
+      const tx = await ethersService.governorContract.cancel(
+        [targetContract],
+        [value || 0],
+        [calldata],
+        descriptionHash
+      );
+      await tx.wait();
+
+      return {
+        success: true,
+        hash: tx.hash,
+      };
+    } catch (error) {
+      console.error("Error cancelling proposal:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   async getProposalState(proposalId) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();

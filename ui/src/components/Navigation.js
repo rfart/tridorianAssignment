@@ -65,6 +65,18 @@ const Navigation = () => {
             </li>
             <li>
               <Link
+                to="/proposal-management"
+                className={`px-3 py-2 rounded-md ${
+                  location.pathname === "/proposal-management"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Proposal Management
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/treasury"
                 className={`px-3 py-2 rounded-md ${
                   location.pathname === "/treasury"
