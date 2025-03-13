@@ -126,11 +126,6 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         override(Governor, GovernorTimelockControl)
         returns (uint48)
     {
-        // If the proposal is active, remove it from active proposals
-        if (_isProposalActive[proposalId]) {
-            _removeProposal(proposalId);
-        }
-        
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -139,6 +134,7 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
         override(Governor, GovernorTimelockControl)
     {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
+    
     }
 
     function _cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
