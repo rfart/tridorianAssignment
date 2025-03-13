@@ -39,17 +39,17 @@ const Dashboard = () => {
 
         try {
           setLoadingVotingPower(true);
-          const timePoint = Date.now(); // Example timePoint value
-          const result = await governanceService.getVotingPower(account, timePoint);
+          const result = await governanceService.getVotingPower(account);
           if (result.success) {
-            setVotingPower(result.votingPower);
+            const decimals = await ethersService.tokenContract.decimals();
+            setVotingPower((result.votingPower / Math.pow(10, decimals)).toFixed(2));
           } else {
             console.error("Error in getVotingPower:", result.error);
-            setVotingPower("0");
+            setVotingPower("0.00");
           }
         } catch (error) {
           console.error("Error fetching initial voting power:", error);
-          setVotingPower("0");
+          setVotingPower("0.00");
         } finally {
           setLoadingVotingPower(false);
         }
@@ -99,14 +99,15 @@ const Dashboard = () => {
       const timePoint = Date.now(); // Example timePoint value
       const result = await governanceService.getVotingPower(userAccount, timePoint);
       if (result.success) {
-        setVotingPower(result.votingPower);
+        const decimals = await ethersService.tokenContract.decimals();
+        setVotingPower((result.votingPower / Math.pow(10, decimals)).toFixed(2));
       } else {
         console.error("Error in getVotingPower:", result.error);
-        setVotingPower("0");
+        setVotingPower("0.00");
       }
     } catch (error) {
       console.error("Error fetching voting power:", error);
-      setVotingPower("0");
+      setVotingPower("0.00");
     } finally {
       setLoadingVotingPower(false);
     }

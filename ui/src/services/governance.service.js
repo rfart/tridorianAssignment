@@ -350,14 +350,14 @@ class GovernanceService {
     return null;
   }
 
-  async getVotingPower(account, timePoint) {
+  async getVotingPower(account) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
-      const votingPower = await ethersService.tokenContract.getVotes(account, timePoint);
+      const votingPower = await ethersService.tokenContract.getVotes(account);
       return {
         success: true,
-        votingPower: votingPower.toString(),
+        votingPower: votingPower,
       };
     } catch (error) {
       console.error("Error fetching voting power:", error);
