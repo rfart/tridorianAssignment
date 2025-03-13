@@ -208,6 +208,43 @@ class GovernanceService {
     }
   }
 
+  async getProposalVotes(proposalId) {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+      // Get proposal votes - handle potential errors for non-existent proposals
+      let forVotes = "0";
+      let againstVotes = "0";
+      let abstainVotes = "0";
+      try {
+        const votes = await ethersService.governorContract.proposalVotes(
+          proposalId
+        );
+
+        console.log("Proposal votes:", votes);
+
+        // Ensure we're getting valid BigNumber values and convert to string
+        againstVotes = votes[0] ? votes[0].toString() : "0";
+        forVotes = votes[1] ? votes[1].toString() : "0";
+        abstainVotes = votes[2] ? votes[2].toString() : "0";
+      } catch (error) {
+        console.warn(`Could not get votes for proposal ${proposalId}:`, error);
+      }
+
+      return {
+        success: true,
+        forVotes,
+        againstVotes,
+        abstainVotes,
+      };
+    } catch (error) {
+      console.error("Error fetching proposal votes:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   async getProposalDetails(proposalId) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();

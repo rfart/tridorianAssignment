@@ -117,27 +117,6 @@ const ProposalCard = ({ proposal, refreshProposals }) => {
         <div className="font-mono text-sm">{proposal.targets[0]}</div>
       </div>
 
-      <div className="mb-4 flex justify-between">
-        <div>
-          <span className="font-semibold mr-1">For:</span>
-          {proposal.forVotes
-            ? ethers.utils.formatEther(proposal.forVotes)
-            : "0"}
-        </div>
-        <div>
-          <span className="font-semibold mr-1">Against:</span>
-          {proposal.againstVotes
-            ? ethers.utils.formatEther(proposal.againstVotes)
-            : "0"}
-        </div>
-        <div>
-          <span className="font-semibold mr-1">Abstain:</span>
-          {proposal.abstainVotes
-            ? ethers.utils.formatEther(proposal.abstainVotes)
-            : "0"}
-        </div>
-      </div>
-
       <div className="flex flex-wrap gap-2 mt-4">
         {proposal.state === "Active" && (
           <button

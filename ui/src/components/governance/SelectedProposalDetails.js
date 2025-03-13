@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ProposalCard from "./ProposalCard";
 import VoteOnProposal from "./VoteOnProposal";
+import governanceService from "../../services/governance.service";
 
 const SelectedProposalDetails = ({
   proposal,
@@ -8,6 +9,26 @@ const SelectedProposalDetails = ({
   onClose,
   isLoading,
 }) => {
+  const [votes, setVotes] = useState({
+    forVotes: "0",
+    againstVotes: "0",
+    abstainVotes: "0",
+  });
+
+  useEffect(() => {
+    if (proposal) {
+      governanceService.getProposalVotes(proposal.id).then((result) => {
+        if (result.success) {
+          setVotes({
+            forVotes: result.forVotes,
+            againstVotes: result.againstVotes,
+            abstainVotes: result.abstainVotes,
+          });
+        }
+      });
+    }
+  }, [proposal]);
+
   if (isLoading) {
     return (
       <div className="text-center py-10 border rounded-md">
@@ -98,17 +119,17 @@ const SelectedProposalDetails = ({
             <div className="mt-2 space-y-2">
               <p>
                 <span className="text-gray-600">For Votes:</span>{" "}
-                {proposal.forVotes}
+                {votes.forVotes}
               </p>
               <p>
                 <span className="text-gray-600">Against Votes:</span>{" "}
-                {proposal.againstVotes}
+                {votes.againstVotes}
               </p>
               <p>
                 <span className="text-gray-600">Abstain Votes:</span>{" "}
-                {proposal.abstainVotes}
+                {votes.abstainVotes}
               </p>
-              {getVotingProgressBar(proposal)}
+              {getVotingProgressBar(votes)}
             </div>
           </div>
 
@@ -177,11 +198,11 @@ const getStateColor = (state) => {
   return colors[state] || "bg-gray-100 text-gray-800";
 };
 
-const getVotingProgressBar = (proposal) => {
+const getVotingProgressBar = (votes) => {
   // Ensure proper conversion of vote values to numbers
-  const forVotes = parseInt(proposal.forVotes) || 0;
-  const againstVotes = parseInt(proposal.againstVotes) || 0;
-  const abstainVotes = parseInt(proposal.abstainVotes) || 0;
+  const forVotes = parseInt(votes.forVotes) || 0;
+  const againstVotes = parseInt(votes.againstVotes) || 0;
+  const abstainVotes = parseInt(votes.abstainVotes) || 0;
 
   const total = forVotes + againstVotes + abstainVotes;
 
