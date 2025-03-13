@@ -58,7 +58,7 @@ contract TridorianGovernorTest is Test {
         
         // Deploy the timelock
         timelock = new TimelockController(
-            1 days, // Min delay
+            1 minutes, // Min delay
             proposers,
             executors,
             admin
@@ -256,7 +256,7 @@ contract TridorianGovernorTest is Test {
         assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Queued));
         
         // Move forward past timelock delay
-        vm.warp(block.timestamp + 1 days + 1);
+        vm.warp(block.timestamp + 1 minutes + 1);
         
         // Execute the proposal
         vm.startPrank(executor);
@@ -453,7 +453,7 @@ contract TridorianGovernorTest is Test {
         governor.queue(targets, values, correctCalldatas, descHash);
         vm.stopPrank();
         
-        vm.warp(block.timestamp + 1 days + 1);
+        vm.warp(block.timestamp + 1 minutes + 1);
         
         vm.startPrank(executor);
         governor.execute(targets, values, correctCalldatas, descHash);

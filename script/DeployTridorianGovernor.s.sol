@@ -43,7 +43,7 @@ contract DeployTridorianGovernor is Script {
         address[] memory executors = new address[](0);
         
         TimelockController timelock = new TimelockController(
-            1 days,    // 1 day minimum delay
+            1 minutes,    // 1 day minimum delay
             proposers, // Proposers
             executors, // Executors (empty array means anyone can execute)
             deployerAddress  // Admin
