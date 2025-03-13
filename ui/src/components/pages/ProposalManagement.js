@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import governanceService from "../../services/governance.service";
-import { ethers } from "ethers";
 import CreateProposal from "../governance/CreateProposal";
 
 const ProposalManagement = () => {

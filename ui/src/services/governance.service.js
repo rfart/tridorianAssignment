@@ -349,6 +349,24 @@ class GovernanceService {
     }
     return null;
   }
+
+  async getVotingPower(account, timePoint) {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+
+      const votingPower = await ethersService.tokenContract.getVotes(account, timePoint);
+      return {
+        success: true,
+        votingPower: votingPower.toString(),
+      };
+    } catch (error) {
+      console.error("Error fetching voting power:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
 }
 
 const governanceService = new GovernanceService();

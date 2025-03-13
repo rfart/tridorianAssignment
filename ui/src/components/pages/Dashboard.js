@@ -39,7 +39,8 @@ const Dashboard = () => {
 
         try {
           setLoadingVotingPower(true);
-          const result = await governanceService.getVotingPower(account);
+          const timePoint = Date.now(); // Example timePoint value
+          const result = await governanceService.getVotingPower(account, timePoint);
           if (result.success) {
             setVotingPower(result.votingPower);
           } else {
@@ -95,7 +96,8 @@ const Dashboard = () => {
   const fetchVotingPower = async () => {
     try {
       setLoadingVotingPower(true);
-      const result = await governanceService.getVotingPower(userAccount);
+      const timePoint = Date.now(); // Example timePoint value
+      const result = await governanceService.getVotingPower(userAccount, timePoint);
       if (result.success) {
         setVotingPower(result.votingPower);
       } else {
