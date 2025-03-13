@@ -80,16 +80,11 @@ class GovernanceService {
     }
   }
 
-  async queueProposal(targetContract, value, calldata, descriptionHash) {
+  async queueProposal(proposalId) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
-      const tx = await ethersService.governorContract.queue(
-        [targetContract],
-        [value || 0],
-        [calldata],
-        descriptionHash
-      );
+      const tx = await ethersService.governorContract.queue(proposalId);
       await tx.wait();
 
       return {
@@ -105,15 +100,13 @@ class GovernanceService {
     }
   }
 
-  async executeProposal(targetContract, value, calldata, descriptionHash) {
+  async executeProposal(payableAmount, proposalId) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
       const tx = await ethersService.governorContract.execute(
-        [targetContract],
-        [value || 0],
-        [calldata],
-        descriptionHash
+        payableAmount || 0,
+        proposalId
       );
       await tx.wait();
 
@@ -130,16 +123,11 @@ class GovernanceService {
     }
   }
 
-  async cancelProposal(targetContract, value, calldata, descriptionHash) {
+  async cancelProposal(proposalId) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
-      const tx = await ethersService.governorContract.cancel(
-        [targetContract],
-        [value || 0],
-        [calldata],
-        descriptionHash
-      );
+      const tx = await ethersService.governorContract.cancel(proposalId);
       await tx.wait();
 
       return {

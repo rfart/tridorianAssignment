@@ -61,4 +61,22 @@ interface ITridorianGovernor is IGovernor {
      * @dev See {Governor-proposalThreshold}
      */
     function proposalThreshold() external view override returns (uint256);
+
+    /**
+     * @dev Adds a proposal to the queue
+     * @param proposalId The ID of the proposal to queue
+     */
+    function queue(uint256 proposalId) external;
+
+    /**
+     * @dev Cancels a proposal
+     * @param proposalId The ID of the proposal to cancel
+     */
+    function cancel(uint256 proposalId) external;
+
+    /**
+     * @dev Executes a proposal
+     * @param proposalId The ID of the proposal to execute
+     */
+    function execute(uint256 proposalId) external payable;
 }

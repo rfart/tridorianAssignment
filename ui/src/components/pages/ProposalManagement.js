@@ -11,10 +11,7 @@ const ProposalManagement = () => {
   const [modalType, setModalType] = useState("");
   const [formValues, setFormValues] = useState({
     proposalId: "",
-    targetContract: "",
-    value: "0",
-    calldata: "",
-    descriptionHash: "",
+    payableAmount: "0", // Changed from 'value' to 'payableAmount'
   });
   const [message, setMessage] = useState({ type: "", text: "" });
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -56,10 +53,7 @@ const ProposalManagement = () => {
     if (proposal) {
       setFormValues({
         proposalId: proposal.id,
-        targetContract: proposal.targets[0] || "",
-        value: proposal.values[0] || "0",
-        calldata: proposal.calldatas[0] || "",
-        descriptionHash: proposal.descriptionHash || "",
+        payableAmount: "0", // Default value for payable amount
       });
     }
   };
@@ -81,26 +75,16 @@ const ProposalManagement = () => {
       switch (modalType) {
         case "execute":
           result = await governanceService.executeProposal(
-            formValues.targetContract,
-            formValues.value,
-            formValues.calldata,
-            formValues.descriptionHash
+            formValues.payableAmount,
+            formValues.proposalId
           );
           break;
         case "queue":
-          result = await governanceService.queueProposal(
-            formValues.targetContract,
-            formValues.value,
-            formValues.calldata,
-            formValues.descriptionHash
-          );
+          result = await governanceService.queueProposal(formValues.proposalId);
           break;
         case "cancel":
           result = await governanceService.cancelProposal(
-            formValues.targetContract,
-            formValues.value,
-            formValues.calldata,
-            formValues.descriptionHash
+            formValues.proposalId
           );
           break;
         default:
@@ -298,58 +282,22 @@ const ProposalManagement = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Target Contract Address
-                </label>
-                <input
-                  type="text"
-                  name="targetContract"
-                  value={formValues.targetContract}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Value (ETH)
-                </label>
-                <input
-                  type="text"
-                  name="value"
-                  value={formValues.value}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Call Data
-                </label>
-                <input
-                  type="text"
-                  name="calldata"
-                  value={formValues.calldata}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description Hash
-                </label>
-                <input
-                  type="text"
-                  name="descriptionHash"
-                  value={formValues.descriptionHash}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
+
+              {modalType === "execute" && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payable Amount (ETH)
+                  </label>
+                  <input
+                    type="text"
+                    name="payableAmount"
+                    value={formValues.payableAmount}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              )}
+
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
