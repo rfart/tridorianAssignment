@@ -96,8 +96,7 @@ const Dashboard = () => {
   const fetchVotingPower = async () => {
     try {
       setLoadingVotingPower(true);
-      const timePoint = Date.now(); // Example timePoint value
-      const result = await governanceService.getVotingPower(userAccount, timePoint);
+      const result = await governanceService.getVotingPower(userAccount);
       if (result.success) {
         const decimals = await ethersService.tokenContract.decimals();
         setVotingPower((result.votingPower / Math.pow(10, decimals)).toFixed(2));
