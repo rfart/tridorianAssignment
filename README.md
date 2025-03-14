@@ -4,6 +4,7 @@ This repository contains smart contracts for a governance system including:
 
 - VotingToken: An ERC20 token with voting capabilities
 - TridorianGovernor: A governance contract that allows token holders to create, vote, and execute proposals
+- Target: A simple contract that can be controlled through governance proposals
 
 ## Foundry
 
@@ -104,6 +105,17 @@ export VOTING_TOKEN_ADDRESS=0x...your token address...
 forge script script/DeployTridorianGovernor.s.sol:DeployTridorianGovernor --rpc-url $RPC_URL --broadcast --verify -vvv
 ```
 
+### Deploy Target Contract
+
+The Target contract is a simple contract that can be controlled through governance proposals:
+
+```bash
+source .env
+forge script script/DeployTarget.s.sol:DeployTarget --rpc-url $RPC_URL --broadcast --verify -vvv
+```
+
+After deployment, you can use this contract's address as the target for governance proposals to test the governance system.
+
 ### Verify Contracts Manually
 
 If you need to verify contracts after deployment:
@@ -135,3 +147,40 @@ TridorianGovernor includes functionality to track active proposals:
 
 - View all active proposals with `getActiveProposals()`
 - Check if a proposal is active with `isProposalActive(proposalId)`
+
+## User Flow of TridorianGovernor
+
+### Proposal Creation (Anyone with Sufficient Voting Power)
+
+A user who holds governance tokens creates a proposal by specifying:
+- The target contract(s)
+- The function(s) to call
+- The parameters of the function(s)
+- The proposal is submitted to the Governor contract.
+- A minimum number of tokens (Proposal Threshold) may be required to create a proposal.
+
+### Proposal Queued & Voting Period Starts
+
+Once the proposal is created, it enters a pending state.
+After a certain delay, the voting period begins.
+Token holders can vote For, Against, or Abstain based on their voting power.
+
+### Voting Mechanisms
+
+Votes are usually weighted based on the number of governance tokens a user holds.
+The common voting systems include:
+- Token-weighted voting: 1 token = 1 vote.
+- Quadratic voting: Limits influence of large holders.
+- Delegated voting: Users can delegate their votes to another address.
+
+### Voting Ends & Proposal Status is Evaluated
+
+After the voting period, the proposal outcome is determined.
+If the required quorum is reached and more votes are "For" than "Against," the proposal is marked as Succeeded.
+If it fails to meet quorum or gets more "Against" votes, it's marked as Defeated.
+
+### Proposal Execution
+
+If the proposal passes, it enters a timelock (optional, for security).
+Once the delay ends, the proposal can be executed by anyone.
+The Governor contract then calls the specified functions in the proposal.

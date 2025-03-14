@@ -1,6 +1,26 @@
-# Getting Started with Create React App
+# Tridorian UI Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the front-end UI for the Tridorian Assignment project. The application is built using React.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (v14.x or higher recommended)
+- npm (usually comes with Node.js)
+- Git (for cloning the repository)
+
+## Setup and Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd tridorianAssignment/ui
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
 ## Available Scripts
 
@@ -39,32 +59,40 @@ Instead, it will copy all the configuration files and the transitive dependencie
 
 You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
-## Learn More
+## Project Structure
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+ui/
+├── public/          # Public assets and index.html
+├── src/             # Source files
+│   ├── components/  # React components
+│   ├── pages/       # Page components
+│   ├── services/    # API services
+│   ├── styles/      # CSS/SCSS files
+│   ├── utils/       # Utility functions
+│   ├── App.js       # Main App component
+│   └── index.js     # Entry point
+└── package.json     # Project dependencies and scripts
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Environment Configuration
 
-### Code Splitting
+Create a `.env` file in the root directory with the following variables if needed:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+REACT_APP_API_URL=http://localhost:8000/api
+```
 
-### Analyzing the Bundle Size
+## Additional Resources
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- [React Documentation](https://reactjs.org/)
+- [Create React App Documentation](https://create-react-app.dev/)
 
-### Making a Progressive Web App
+## Troubleshooting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+If you encounter any issues:
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Make sure all dependencies are installed correctly
+2. Check console for error messages
+3. Ensure environment variables are set properly
+4. Try deleting `node_modules` and running `npm install` again
