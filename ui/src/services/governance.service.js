@@ -84,7 +84,7 @@ class GovernanceService {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
-      const tx = await ethersService.governorContract.queue(proposalId);
+      const tx = await ethersService.queueContract.queue(proposalId);
       await tx.wait();
 
       return {
@@ -100,14 +100,62 @@ class GovernanceService {
     }
   }
 
-  async executeProposal(payableAmount, proposalId) {
+  async executeProposal(proposalId, payableAmount) {
     try {
       if (!ethersService.initialized) await ethersService.initialize();
 
-      const tx = await ethersService.governorContract.execute(
-        payableAmount || 0,
-        proposalId
-      );
+      // Check proposal state first to give better error messages
+      const stateResult = await this.getProposalState(proposalId);
+      if (stateResult.state !== 5) { // 5 is "Queued" state
+        return {
+          success: false,
+          error: `Proposal must be in Queued state to execute (current state: ${stateResult.stateLabel})`
+        };
+      }
+
+      // Get the required payment amount to verify we're sending the correct value
+      const paymentInfo = await this.getProposalRequiredPayment(proposalId);
+      
+      // Convert user-provided payableAmount to BigNumber for comparison
+      const providedAmount = payableAmount ? 
+        ethers.utils.parseEther(payableAmount) : 
+        ethers.BigNumber.from(0);
+        
+      // Verify the provided amount matches the required amount
+      if (!providedAmount.eq(paymentInfo.requiredAmount)) {
+        return {
+          success: false,
+          error: `Incorrect payment amount. Required: ${paymentInfo.formattedAmount} ETH`,
+        };
+      }
+
+      // Try to execute with both contracts just in case the implementation differs
+      let tx;
+      try {
+        // First try with queueContract
+        tx = await ethersService.queueContract.execute(proposalId, {
+          value: providedAmount,
+          gasLimit: 600000, // Increased gas limit
+        });
+      } catch (innerError) {
+        console.log("Failed to execute with queueContract, trying governorContract instead:", innerError);
+        
+        // If that fails, try with governorContract
+        // Note: Some governor implementations have execute on the governor contract itself
+        const proposalData = await ethersService.governorContract.proposalDetails(proposalId);
+        
+        tx = await ethersService.governorContract.execute(
+          proposalData.targets,
+          proposalData.values,
+          proposalData.calldatas,
+          ethers.utils.id(proposalData.descriptionHash),
+          {
+            value: providedAmount,
+            gasLimit: 600000, // Increased gas limit
+          }
+        );
+      }
+      
       await tx.wait();
 
       return {
@@ -116,9 +164,29 @@ class GovernanceService {
       };
     } catch (error) {
       console.error("Error executing proposal:", error);
+      
+      // Provide more specific error messages
+      let errorMessage = error.message || "Unknown execution error";
+      
+      if (errorMessage.includes("CALL_EXCEPTION")) {
+        errorMessage = "Transaction failed on the blockchain. This might be due to:";
+        errorMessage += "\n- The proposal is not ready for execution yet";
+        errorMessage += "\n- The caller doesn't have permission to execute";
+        errorMessage += "\n- The proposal execution itself is failing";
+      } else if (errorMessage.includes("execution reverted")) {
+        if (errorMessage.includes("TimelockController: operation is not ready")) {
+          errorMessage = "Proposal execution timelock has not expired yet";
+        } else if (errorMessage.includes("Governor: proposal not successful")) {
+          errorMessage = "Proposal was not successful and cannot be executed";
+        } else if (errorMessage.includes("not queued")) {
+          errorMessage = "This proposal has not been queued for execution";
+        }
+      }
+      
       return {
         success: false,
-        error: error.message,
+        error: errorMessage,
+        originalError: error.message
       };
     }
   }
@@ -401,6 +469,61 @@ class GovernanceService {
       return {
         success: false,
         error: error.message,
+      };
+    }
+  }
+
+  async getProposalRequiredPayment(proposalId) {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+      
+      // Get proposal details to access the values array
+      const proposalData = await ethersService.governorContract.proposalDetails(proposalId);
+      
+      // Sum up all values in the proposal (in case there are multiple targets)
+      let totalRequired = ethers.BigNumber.from(0);
+      if (proposalData && proposalData.values && proposalData.values.length > 0) {
+        for (const value of proposalData.values) {
+          totalRequired = totalRequired.add(value);
+        }
+      }
+      
+      return {
+        success: true,
+        requiredAmount: totalRequired,
+        formattedAmount: ethers.utils.formatEther(totalRequired)
+      };
+    } catch (error) {
+      console.error("Error fetching proposal required payment:", error);
+      return {
+        success: false,
+        error: error.message,
+        requiredAmount: ethers.BigNumber.from(0),
+        formattedAmount: "0"
+      };
+    }
+  }
+
+  async hasVotedOnProposal(proposalId, account = null) {
+    try {
+      if (!ethersService.initialized) await ethersService.initialize();
+      
+      // If no account provided, use the current connected account
+      const voterAddress = account || await ethersService.getAccount();
+      
+      // Check if the account has already cast a vote on this proposal
+      const hasVoted = await ethersService.governorContract.hasVoted(proposalId, voterAddress);
+      
+      return {
+        success: true,
+        hasVoted
+      };
+    } catch (error) {
+      console.error("Error checking if account has voted:", error);
+      return {
+        success: false,
+        error: error.message,
+        hasVoted: false
       };
     }
   }
