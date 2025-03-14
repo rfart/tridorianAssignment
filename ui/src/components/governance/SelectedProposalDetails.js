@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ProposalCard from "./ProposalCard";
 import VoteOnProposal from "./VoteOnProposal";
 import governanceService from "../../services/governance.service";
+import { ethers } from "ethers";
 
 const SelectedProposalDetails = ({
   proposal,
@@ -19,10 +20,12 @@ const SelectedProposalDetails = ({
     if (proposal) {
       governanceService.getProposalVotes(proposal.id).then((result) => {
         if (result.success) {
+          // Parse the vote values as decimals using ethers.utils.formatUnits
+          // Assuming the votes are returned in wei format (18 decimals)
           setVotes({
-            forVotes: result.forVotes,
-            againstVotes: result.againstVotes,
-            abstainVotes: result.abstainVotes,
+            forVotes: ethers.utils.formatUnits(result.forVotes, 18),
+            againstVotes: ethers.utils.formatUnits(result.againstVotes, 18),
+            abstainVotes: ethers.utils.formatUnits(result.abstainVotes, 18),
           });
         }
       });
