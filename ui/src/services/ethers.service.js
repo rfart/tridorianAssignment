@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import VotingToken from "./abi/VotingToken.sol/VotingToken.json";
 import Governor from "./abi/TridorianGovernor.sol/TridorianGovernor.json";
+import Target from "./abi/Target.sol/Target.json";
 
 const tokenABI = VotingToken.abi;
 const governorABI = Governor.abi;
@@ -8,11 +9,13 @@ const executeABI = [
   "function queue(uint256 proposalId) public",
   "function execute(uint256 proposalId) public"
 ]
+const TargetABI = Target.abi;
 
 // Use environment variables from React's process.env
 // These should be prefixed with REACT_APP_ in a .env file
 const GOVERNOR_ADDRESS = process.env.REACT_APP_GOVERNOR_ADDRESS;
 const TOKEN_ADDRESS = process.env.REACT_APP_VOTING_TOKEN_ADDRESS;
+const TARGET_ADDRESS = process.env.REACT_APP_TARGET_ADDRESS;
 
 class EthersService {
   constructor() {
@@ -20,6 +23,9 @@ class EthersService {
     this.signer = null;
     this.governorContract = null;
     this.tokenContract = null;
+    this.queueContract = null;
+    this.targetContract = null;
+
     this.initialized = false;
   }
 
@@ -48,6 +54,12 @@ class EthersService {
         this.queueContract = new ethers.Contract(
           GOVERNOR_ADDRESS,
           executeABI,
+          this.signer
+        );
+
+        this.targetContract = new ethers.Contract(
+          TARGET_ADDRESS,
+          TargetABI,
           this.signer
         );
 

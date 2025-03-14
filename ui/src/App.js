@@ -8,7 +8,7 @@ import {
 import ConnectPrompt from "./components/ConnectPrompt";
 import Dashboard from "./components/pages/Dashboard";
 import Vote from "./components/pages/Vote";
-import Treasury from "./components/pages/Treasury";
+import Target from "./components/pages/Target";
 import ProposalManagement from "./components/pages/ProposalManagement";
 import Navigation from "./components/Navigation";
 import "./App.css";
@@ -56,7 +56,7 @@ const App = () => {
                 path="/proposal-management"
                 element={<ProposalManagement />}
               />
-              <Route path="/treasury" element={<Treasury />} />
+              <Route path="/target" element={<Target />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

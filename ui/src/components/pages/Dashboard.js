@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ethersService from "../../services/ethers.service";
 import governanceService from "../../services/governance.service";
+import targetService from "../../services/target.service";
 
 const Dashboard = () => {
   const [userAccount, setUserAccount] = useState("");
@@ -14,6 +15,8 @@ const Dashboard = () => {
   const [loadingTokenBalance, setLoadingTokenBalance] = useState(false);
   const [loadingVotingPower, setLoadingVotingPower] = useState(false);
   const [loadingProposals, setLoadingProposals] = useState(false);
+  const [targetValue, setTargetValue] = useState("0");
+  const [loadingTargetValue, setLoadingTargetValue] = useState(false);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -68,6 +71,23 @@ const Dashboard = () => {
           setActiveProposalCount(0);
         } finally {
           setLoadingProposals(false);
+        }
+
+        // Fetch target value
+        try {
+          setLoadingTargetValue(true);
+          const result = await targetService.getValue();
+          if (result.success) {
+            setTargetValue(result.value);
+          } else {
+            console.error("Error in getValue:", result.error);
+            setTargetValue("0");
+          }
+        } catch (error) {
+          console.error("Error fetching target value:", error);
+          setTargetValue("0");
+        } finally {
+          setLoadingTargetValue(false);
         }
       } catch (error) {
         console.error("Error fetching user account:", error);
@@ -127,6 +147,24 @@ const Dashboard = () => {
       setActiveProposalCount(0);
     } finally {
       setLoadingProposals(false);
+    }
+  };
+
+  const fetchTargetValue = async () => {
+    try {
+      setLoadingTargetValue(true);
+      const result = await targetService.getValue();
+      if (result.success) {
+        setTargetValue(result.value);
+      } else {
+        console.error("Error in getValue:", result.error);
+        setTargetValue("0");
+      }
+    } catch (error) {
+      console.error("Error fetching target value:", error);
+      setTargetValue("0");
+    } finally {
+      setLoadingTargetValue(false);
     }
   };
 
@@ -210,16 +248,25 @@ const Dashboard = () => {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Treasury</h2>
+          <h2 className="text-xl font-semibold mb-4">Target Contract</h2>
           <div className="mb-4">
-            <p className="text-gray-500 mb-1">Treasury Balance</p>
-            <p className="text-2xl font-bold">0 ETH</p>
+            <p className="text-gray-500 mb-1">Current Value</p>
+            <div className="flex items-center">
+              <p className="text-2xl font-bold">{targetValue}</p>
+              <button
+                onClick={fetchTargetValue}
+                disabled={loadingTargetValue}
+                className="ml-4 bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+              >
+                {loadingTargetValue ? "Loading..." : "Refresh"}
+              </button>
+            </div>
           </div>
           <Link
-            to="/treasury"
+            to="/target"
             className="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700"
           >
-            View Treasury
+            View Target
           </Link>
         </div>
       </div>
