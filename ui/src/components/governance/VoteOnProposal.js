@@ -1,10 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import governanceService from "../../services/governance.service";
 
 const VoteOnProposal = ({ proposalId, onVoteComplete }) => {
   const [selectedVote, setSelectedVote] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+
+  useEffect(() => {
+    const checkVotingStatus = async () => {
+      try {
+        setCheckingStatus(true);
+        const response = await governanceService.hasVotedOnProposal(proposalId);
+        if (response.success) {
+          setHasVoted(response.hasVoted);
+        }
+      } catch (error) {
+        console.error("Failed to check voting status:", error);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    if (proposalId) {
+      checkVotingStatus();
+    }
+  }, [proposalId]);
 
   const handleVote = async (e) => {
     e.preventDefault();
@@ -35,6 +57,23 @@ const VoteOnProposal = ({ proposalId, onVoteComplete }) => {
       setIsLoading(false);
     }
   };
+
+  if (checkingStatus) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow">
+        <p className="text-gray-500">Checking voting status...</p>
+      </div>
+    );
+  }
+
+  if (hasVoted) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-3">You've Already Voted</h3>
+        <p className="text-gray-700">You have already cast your vote on this proposal.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-4 rounded-lg shadow">

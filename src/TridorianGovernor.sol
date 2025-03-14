@@ -20,7 +20,7 @@ contract TridorianGovernor is Governor, GovernorSettings, GovernorCountingSimple
 
     constructor(IVotes _token, TimelockController _timelock)
         Governor("TridorianGovernor")
-        GovernorSettings(1 minutes, 10 minutes, 0)
+        GovernorSettings(1 minutes, 3 minutes, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
         GovernorTimelockControl(_timelock)

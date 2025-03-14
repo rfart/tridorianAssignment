@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import VoteOnProposal from "./VoteOnProposal";
 import governanceService from "../../services/governance.service";
-import { ethers } from "ethers";
 
 const ProposalCard = ({ proposal, refreshProposals }) => {
   const [isLoading, setIsLoading] = useState(false);

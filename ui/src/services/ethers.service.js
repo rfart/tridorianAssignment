@@ -4,6 +4,10 @@ import Governor from "./abi/TridorianGovernor.sol/TridorianGovernor.json";
 
 const tokenABI = VotingToken.abi;
 const governorABI = Governor.abi;
+const executeABI = [
+  "function queue(uint256 proposalId) public",
+  "function execute(uint256 proposalId) public"
+]
 
 // Use environment variables from React's process.env
 // These should be prefixed with REACT_APP_ in a .env file
@@ -38,6 +42,12 @@ class EthersService {
         this.tokenContract = new ethers.Contract(
           TOKEN_ADDRESS,
           tokenABI,
+          this.signer
+        );
+
+        this.queueContract = new ethers.Contract(
+          GOVERNOR_ADDRESS,
+          executeABI,
           this.signer
         );
 

@@ -43,4 +43,12 @@ contract Target {
         
         owner = newOwner;
     }
+
+    fallback() external payable {
+
+    }
+
+    receive() external payable {
+
+    }
 }
