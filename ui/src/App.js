@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import ConnectPrompt from "./components/ConnectPrompt";
 import Dashboard from "./components/pages/Dashboard";
-import Proposals from "./components/pages/Proposals";
+import Vote from "./components/pages/Vote";
 import Treasury from "./components/pages/Treasury";
 import ProposalManagement from "./components/pages/ProposalManagement";
 import Navigation from "./components/Navigation";
@@ -51,7 +51,7 @@ const App = () => {
           <main className="content-container p-6">
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/proposals" element={<Proposals />} />
+              <Route path="/vote" element={<Vote />} />
               <Route
                 path="/proposal-management"
                 element={<ProposalManagement />}

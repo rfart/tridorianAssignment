@@ -3,7 +3,7 @@ import SelectedProposalDetails from "../governance/SelectedProposalDetails";
 import governanceService from "../../services/governance.service";
 import DelegateVoting from "../governance/DelegateVoting";
 
-const Proposals = () => {
+const Vote = () => {
   const [activeProposalIds, setActiveProposalIds] = useState([]);
   const [proposalDetails, setProposalDetails] = useState({});
   const [selectedProposalId, setSelectedProposalId] = useState(null);
@@ -159,4 +159,4 @@ const Proposals = () => {
   );
 };
 
-export default Proposals;
+export default Vote;

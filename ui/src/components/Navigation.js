@@ -53,14 +53,14 @@ const Navigation = () => {
             </li>
             <li>
               <Link
-                to="/proposals"
+                to="/vote"
                 className={`px-3 py-2 rounded-md ${
-                  location.pathname === "/proposals"
+                  location.pathname === "/vote"
                     ? "bg-blue-100 text-blue-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                Proposals
+                Vote
               </Link>
             </li>
             <li>
