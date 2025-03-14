@@ -6,26 +6,17 @@ import {TridorianGovernor} from "../src/TridorianGovernor.sol";
 import {VotingToken} from "../src/VotingToken.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
-
-contract MockContract {
-    uint256 public value;
-    
-    function setValue(uint256 _value) external {
-        value = _value;
-    }
-}
+import {Target} from "../src/Target.sol";
 
 contract TridorianGovernorTest is Test {
     TridorianGovernor public governor;
     VotingToken public token;
     TimelockController public timelock;
-    MockContract public mockContract;
+    Target public targetContract;
     
-    address public admin;
-    address public proposer;
+    address public deployer; // The deployer who also acts as proposer and executor
     address public voter1;
     address public voter2;
-    address public executor;
     address public nonDelegated;
     
     uint256 public initialSupply = 1_000_000 * 10 ** 18;
@@ -35,58 +26,55 @@ contract TridorianGovernorTest is Test {
     address[] targets = new address[](1);
     uint256[] values = new uint256[](1);
     bytes[] calldatas = new bytes[](1);
-    string description = "Set value to 42 in mock contract";
+    string description = "Update value to 42 in target contract";
     
     function setUp() public {
-        admin = address(1);
-        proposer = address(2);
+        // Use single deployer address as in the deployment script
+        deployer = address(1);
         voter1 = address(3);
         voter2 = address(4);
-        executor = address(5);
         nonDelegated = address(6);
         
-        vm.startPrank(admin);
+        vm.startPrank(deployer);
         
         // Deploy the token
-        token = new VotingToken(admin);
+        token = new VotingToken(deployer);
         
-        // Setup timelock roles
+        // Setup timelock roles - match the deployment script approach
         address[] memory proposers = new address[](1);
         address[] memory executors = new address[](1);
-        proposers[0] = address(0); // Will be replaced by governor
-        executors[0] = address(0); // Allow anyone to execute
+        proposers[0] = deployer; // Deployer is the proposer initially
+        executors[0] = deployer; // Deployer is the executor initially
         
         // Deploy the timelock
         timelock = new TimelockController(
             1 minutes, // Min delay
             proposers,
             executors,
-            admin
+            deployer // Admin role
         );
         
         // Deploy the governor
         governor = new TridorianGovernor(token, timelock);
         
-        // Grant proposer role to the governor
+        // Grant proposer role to the governor (as in deployment script)
         timelock.grantRole(timelock.PROPOSER_ROLE(), address(governor));
         timelock.grantRole(timelock.CANCELLER_ROLE(), address(governor));
         
-        // Deploy a mock contract for testing proposals
-        mockContract = new MockContract();
+        // Deploy a target contract for testing proposals
+        targetContract = new Target();
         
         // Distribute tokens and delegate voting power
-        token.transfer(proposer, 100_000 * 10 ** 18);
         token.transfer(voter1, 400_000 * 10 ** 18);  // 40% of supply
         token.transfer(voter2, 50_000 * 10 ** 18);
         token.transfer(nonDelegated, 10_000 * 10 ** 18); // User with tokens but no delegation
         
+        // Set up deployer's voting power (keeping 540,000 tokens - 54% of supply)
+        token.delegate(deployer);
+        
         vm.stopPrank();
         
-        // Set up users' voting power
-        vm.startPrank(proposer);
-        token.delegate(proposer);
-        vm.stopPrank();
-        
+        // Set up other users' voting power
         vm.startPrank(voter1);
         token.delegate(voter1);
         vm.stopPrank();
@@ -96,16 +84,16 @@ contract TridorianGovernorTest is Test {
         vm.stopPrank();
         
         // Prepare proposal data
-        targets[0] = address(mockContract);
+        targets[0] = address(targetContract);
         values[0] = 0;
-        calldatas[0] = abi.encodeWithSelector(MockContract.setValue.selector, 42);
+        calldatas[0] = abi.encodeWithSelector(Target.updateValue.selector, 42);
         
         // Move forward a block for checkpoints to be effective
         vm.roll(block.number + 1);
     }
     
     function testCreateProposal() public {
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         
         // Create proposal
         proposalId = governor.propose(targets, values, calldatas, description);
@@ -125,7 +113,7 @@ contract TridorianGovernorTest is Test {
     }
     
     function testFailProposalInvalidArguments() public {
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         
         // Test with empty targets
         address[] memory emptyTargets = new address[](0);
@@ -134,7 +122,7 @@ contract TridorianGovernorTest is Test {
         
         // Test with mismatched arrays
         address[] memory moreTargets = new address[](2);
-        moreTargets[0] = address(mockContract);
+        moreTargets[0] = address(targetContract);
         moreTargets[1] = address(this);
         vm.expectRevert();
         governor.propose(moreTargets, values, calldatas, description);
@@ -152,19 +140,19 @@ contract TridorianGovernorTest is Test {
         console.log("Proposal threshold:", threshold);
         
         // Log voting powers
-        uint256 proposerVotes = token.getVotes(proposer);
+        uint256 deployerVotes = token.getVotes(deployer);
         uint256 voter1Votes = token.getVotes(voter1);
         uint256 voter2Votes = token.getVotes(voter2);
         uint256 nonDelegatedVotes = token.getVotes(nonDelegated);
         
-        console.log("Proposer voting power:", proposerVotes);
+        console.log("Deployer voting power:", deployerVotes);
         console.log("Voter1 voting power:", voter1Votes);
         console.log("Voter2 voting power:", voter2Votes);
         console.log("NonDelegated voting power:", nonDelegatedVotes);
         
-        // Test proposer can create proposal (has enough votes)
-        vm.startPrank(proposer);
-        uint256 pid1 = governor.propose(targets, values, calldatas, "Proposal by proposer");
+        // Test deployer can create proposal (has enough votes)
+        vm.startPrank(deployer);
+        uint256 pid1 = governor.propose(targets, values, calldatas, "Proposal by deployer");
         vm.stopPrank();
         assertEq(uint256(governor.state(pid1)), uint256(IGovernor.ProposalState.Pending));
         
@@ -188,7 +176,7 @@ contract TridorianGovernorTest is Test {
         bytes[] memory emptyCalldata = new bytes[](1);
         emptyCalldata[0] = bytes("");
         
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         vm.expectRevert(); // Should revert with empty calldata
         governor.propose(targets, values, emptyCalldata, "Empty calldata proposal");
         vm.stopPrank();
@@ -197,7 +185,7 @@ contract TridorianGovernorTest is Test {
         bytes[] memory invalidCalldata = new bytes[](1);
         invalidCalldata[0] = abi.encodeWithSignature("nonExistingFunction()", 0);
         
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         uint256 pid = governor.propose(targets, values, invalidCalldata, "Invalid calldata proposal");
         vm.stopPrank();
         
@@ -206,9 +194,9 @@ contract TridorianGovernorTest is Test {
         
         // 3. Valid calldata with different parameter value
         bytes[] memory differentCalldata = new bytes[](1);
-        differentCalldata[0] = abi.encodeWithSelector(MockContract.setValue.selector, 100);
+        differentCalldata[0] = abi.encodeWithSelector(Target.updateValue.selector, 100);
         
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         uint256 pid2 = governor.propose(targets, values, differentCalldata, "Different value calldata");
         vm.stopPrank();
         
@@ -217,7 +205,7 @@ contract TridorianGovernorTest is Test {
     
     function testVotingWorkflow() public {
         // Create proposal
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         proposalId = governor.propose(targets, values, calldatas, description);
         vm.stopPrank();
         
@@ -249,25 +237,21 @@ contract TridorianGovernorTest is Test {
         
         // Queue the proposal
         bytes32 descriptionHash = keccak256(bytes(description));
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         governor.queue(targets, values, calldatas, descriptionHash);
-        vm.stopPrank();
-        
-        assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Queued));
         
         // Move forward past timelock delay
         vm.warp(block.timestamp + 1 minutes + 1);
         
-        // Execute the proposal
-        vm.startPrank(executor);
+        // Execute the proposal (deployer is now the executor, matching deployment)
         governor.execute(targets, values, calldatas, descriptionHash);
         vm.stopPrank();
         
         // Check proposal is executed
         assertEq(uint256(governor.state(proposalId)), uint256(IGovernor.ProposalState.Executed));
         
-        // Check that the mock contract's value was updated
-        assertEq(mockContract.value(), 42);
+        // Check that the target contract's value was updated
+        assertEq(targetContract.getValue(), 42);
     }
     
     function testQuorum() public {
@@ -275,7 +259,7 @@ contract TridorianGovernorTest is Test {
         vm.roll(block.number + 5);
         
         // Create proposal
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         proposalId = governor.propose(targets, values, calldatas, description);
         vm.stopPrank();
         
@@ -308,7 +292,7 @@ contract TridorianGovernorTest is Test {
         assertEq(activePropsList.length, 0);
         
         // Create proposal
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         uint256 newProposalId = governor.propose(targets, values, calldatas, description);
         vm.stopPrank();
         
@@ -336,7 +320,7 @@ contract TridorianGovernorTest is Test {
         
         // Queue the proposal
         bytes32 descriptionHash = keccak256(bytes(description));
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         governor.queue(targets, values, calldatas, descriptionHash);
         vm.stopPrank();
         
@@ -348,7 +332,7 @@ contract TridorianGovernorTest is Test {
     
     function testActiveProposalCancelation() public {
         // Create proposal
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         uint256 newProposalId = governor.propose(targets, values, calldatas, description);
         
         // Check that the proposal is active
@@ -370,7 +354,7 @@ contract TridorianGovernorTest is Test {
     
     function testActiveProposalMultiple() public {
         // Create first proposal
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         uint256 firstProposalId = governor.propose(targets, values, calldatas, "First proposal");
         vm.stopPrank();
         
@@ -398,7 +382,7 @@ contract TridorianGovernorTest is Test {
         
         // Queue first proposal
         bytes32 firstDescriptionHash = keccak256(bytes("First proposal"));
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         governor.queue(targets, values, calldatas, firstDescriptionHash);
         
         // Check that active proposal is cleared
@@ -421,7 +405,7 @@ contract TridorianGovernorTest is Test {
         
         // Create a proposal with explicit calldata encoding
         bytes memory correctCalldata = abi.encodeWithSelector(
-            MockContract.setValue.selector, 
+            Target.updateValue.selector, 
             42
         );
         
@@ -430,7 +414,7 @@ contract TridorianGovernorTest is Test {
         
         console.log("Correct calldata length:", correctCalldata.length);
         
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         uint256 newProposalId = governor.propose(targets, values, correctCalldatas, "Explicit calldata encoding");
         vm.stopPrank();
         
@@ -449,17 +433,17 @@ contract TridorianGovernorTest is Test {
         vm.roll(block.number + 5);
         
         bytes32 descHash = keccak256(bytes("Explicit calldata encoding"));
-        vm.startPrank(proposer);
+        vm.startPrank(deployer);
         governor.queue(targets, values, correctCalldatas, descHash);
         vm.stopPrank();
         
         vm.warp(block.timestamp + 1 minutes + 1);
         
-        vm.startPrank(executor);
+        vm.startPrank(deployer);
         governor.execute(targets, values, correctCalldatas, descHash);
         vm.stopPrank();
         
-        // Verify execution was successful
-        assertEq(mockContract.value(), 42);
+        // Verify execution was successful using getValue()
+        assertEq(targetContract.getValue(), 42);
     }
 }

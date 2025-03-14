@@ -15,14 +15,12 @@ contract Target {
     /**
      * @dev Update the stored uint value
      * @param newValue The new value to store
-     * @return success True if the operation succeeded
      */
-    function updateValue(uint256 newValue) public returns (bool success) {
+    function updateValue(uint256 newValue) public {
         uint256 oldValue = _value;
         _value = newValue;
         
         emit ValueUpdated(oldValue, newValue, msg.sender);
-        return true;
     }
     
     /**

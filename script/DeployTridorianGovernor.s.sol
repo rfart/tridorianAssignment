@@ -62,6 +62,10 @@ contract DeployTridorianGovernor is Script {
         bytes32 PROPOSER_ROLE = timelock.PROPOSER_ROLE();
         timelock.grantRole(PROPOSER_ROLE, address(governor));
         
+        // Grant EXECUTOR_ROLE to the Governor
+        bytes32 EXECUTOR_ROLE = timelock.EXECUTOR_ROLE();
+        timelock.grantRole(EXECUTOR_ROLE, address(governor));
+        
         // Optionally revoke admin role from the deployer if you want the timelock to be controlled only by governance
         // Uncomment the following line to do this:
         // timelock.revokeRole(timelock.DEFAULT_ADMIN_ROLE(), deployerAddress);
